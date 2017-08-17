@@ -32,6 +32,7 @@ typedef int (*FUNC_auth_plugin_security_cleanup)(void *, struct mosquitto_auth_o
 typedef int (*FUNC_auth_plugin_acl_check)(void *, const char *, const char *, const char *, int);
 typedef int (*FUNC_auth_plugin_unpwd_check)(void *, const char *, const char *);
 typedef int (*FUNC_auth_plugin_psk_key_get)(void *, const char *, const char *, char *, int);
+typedef int (*FUNC_auth_plugin_connect_check)(void *, const char *, const char *, const char *, int);
 
 void LIB_ERROR(void)
 {
@@ -121,6 +122,14 @@ int mosquitto_security_module_init(struct mosquitto_db *db)
 		if(!(db->auth_plugin.unpwd_check = (FUNC_auth_plugin_unpwd_check)LIB_SYM(lib, "mosquitto_auth_unpwd_check"))){
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR,
 					"Error: Unable to load auth plugin function mosquitto_auth_unpwd_check().");
+			LIB_ERROR();
+			LIB_CLOSE(lib);
+			return 1;
+		}
+
+		if(!(db->auth_plugin.connect_check = (FUNC_auth_plugin_connect_check)LIB_SYM(lib, "mosquitto_auth_connect_check"))){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR,
+					"Error: Unable to load auth plugin function mosquitto_auth_connect_check().");
 			LIB_ERROR();
 			LIB_CLOSE(lib);
 			return 1;

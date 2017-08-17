@@ -238,6 +238,7 @@ struct _mosquitto_auth_plugin{
 	int (*acl_check)(void *user_data, const char *clientid, const char *username, const char *topic, int access);
 	int (*unpwd_check)(void *user_data, const char *username, const char *password);
 	int (*psk_key_get)(void *user_data, const char *hint, const char *identity, char *key, int max_key_len);
+	int (*connect_check)(void *user_data, const char *username, const char *password, const char *clientid, int sock);
 };
 
 struct mosquitto_db{

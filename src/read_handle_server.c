@@ -415,6 +415,16 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 #endif
 
+   if(db->auth_plugin.lib) {
+      rc = db->auth_plugin.connect_check(db->auth_plugin.user_data, context->username, context->password, client_id, context->sock);
+		  if (rc != MOSQ_ERR_SUCCESS ) {
+			    _mosquitto_send_connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED);
+			    mqtt3_context_disconnect(db, context);
+			    rc = 1;
+			    goto handle_connect_error;
+		  }
+  }
+
 	if(context->listener && context->listener->use_username_as_clientid){
 		if(context->username){
 			_mosquitto_free(client_id);

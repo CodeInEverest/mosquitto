@@ -200,6 +200,7 @@ int mosquitto_auth_acl_check(void *user_data, const char *clientid, const char *
  * error.
  */
 int mosquitto_auth_unpwd_check(void *user_data, const char *username, const char *password);
+int mosquitto_auth_connect_check(void *user_data, const char *username, const char *password, const char *clientid, int sd);
 
 /*
  * Function: mosquitto_psk_key_get

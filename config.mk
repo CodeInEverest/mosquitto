@@ -65,7 +65,7 @@ WITH_SRV:=yes
 WITH_UUID:=yes
 
 # Build with websockets support on the broker.
-WITH_WEBSOCKETS:=no
+WITH_WEBSOCKETS:=yes
 
 # Use elliptic keys in broker
 WITH_EC:=yes
@@ -225,8 +225,8 @@ ifeq ($(WITH_SRV),yes)
 endif
 
 ifeq ($(WITH_WEBSOCKETS),yes)
-	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_WEBSOCKETS
-	BROKER_LIBS:=$(BROKER_LIBS) -lwebsockets
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -I/home/pkg/include -DWITH_WEBSOCKETS
+	BROKER_LIBS:=$(BROKER_LIBS) -L/home/pkg/lib -lwebsockets
 endif
 
 ifeq ($(UNAME),SunOS)
@@ -249,7 +249,7 @@ ifeq ($(WITH_DOCS),yes)
 endif
 
 INSTALL?=install
-prefix=/usr/local
+prefix=/home/pkg
 mandir=${prefix}/share/man
 localedir=${prefix}/share/locale
 STRIP?=strip
