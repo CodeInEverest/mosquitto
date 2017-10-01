@@ -219,6 +219,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 				client_id = client_id_gen(db);
 				if(!client_id){
 					rc = MOSQ_ERR_NOMEM;
+_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "client id gen error\n");
 					goto handle_connect_error;
 				}
 			}
@@ -237,6 +238,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(will){
 		will_struct = _mosquitto_calloc(1, sizeof(struct mosquitto_message));
 		if(!will_struct){
+_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "will struct calloc error\n");
 			rc = MOSQ_ERR_NOMEM;
 			goto handle_connect_error;
 		}
@@ -490,7 +492,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 
 		found_context->clean_session = true;
 		found_context->state = mosq_cs_disconnecting;
-		do_disconnect(db, found_context);
+		do_disconnect(db, found_context, "connected via other device");
 	}
 
 	/* Associate user with its ACL, assuming we have ACLs loaded. */
@@ -618,12 +620,12 @@ int mqtt3_handle_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Received DISCONNECT from %s", context->id);
 	if(context->protocol == mosq_p_mqtt311){
 		if((context->in_packet.command&0x0F) != 0x00){
-			do_disconnect(db, context);
+			do_disconnect(db, context, "client request for close");
 			return MOSQ_ERR_PROTOCOL;
 		}
 	}
 	context->state = mosq_cs_disconnecting;
-	do_disconnect(db, context);
+	do_disconnect(db, context, "disconnecting");
 	return MOSQ_ERR_SUCCESS;
 }
 

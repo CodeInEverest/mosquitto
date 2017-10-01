@@ -513,6 +513,6 @@ struct lws_context *mosq_websockets_init(struct _mqtt3_listener *listener, int l
 struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener, int log_level);
 #  endif
 #endif
-void do_disconnect(struct mosquitto_db *db, struct mosquitto *context);
+void do_disconnect(struct mosquitto_db *db, struct mosquitto *context, const char *trace_msg);
 
 #endif

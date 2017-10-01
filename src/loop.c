@@ -80,7 +80,7 @@ static void temp__expire_websockets_clients(struct mosquitto_db *db)
 						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
 					}
 					/* Client has exceeded keepalive*1.5 */
-					do_disconnect(db, context);
+					do_disconnect(db, context, "timeout");
 				}
 			}
 		}
@@ -203,7 +203,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 						context->pollfd_index = pollfd_index;
 						pollfd_index++;
 					}else{
-						do_disconnect(db, context);
+						do_disconnect(db, context, "mqtt3_db_message_write error");
 					}
 				}else{
 					if(db->config->connection_messages == true){
@@ -215,7 +215,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
 					}
 					/* Client has exceeded keepalive*1.5 */
-					do_disconnect(db, context);
+					do_disconnect(db, context, "timeout 1");
 				}
 			}
 		}
@@ -334,7 +334,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #endif
 						context->clean_session = true;
 						context->state = mosq_cs_expiring;
-						do_disconnect(db, context);
+						do_disconnect(db, context, "due to timeout");
 					}
 				}
 			}
@@ -422,7 +422,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 	return MOSQ_ERR_SUCCESS;
 }
 
-void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
+void do_disconnect(struct mosquitto_db *db, struct mosquitto *context, const char *trace_msg)
 {
 	char *id;
 
@@ -452,9 +452,9 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 				id = "<unknown>";
 			}
 			if(context->state != mosq_cs_disconnecting){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting. %s", id, trace_msg);
 			}else{
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", id);
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected. %s", id, trace_msg);
 			}
 		}
 		mqtt3_context_disconnect(db, context);
@@ -513,12 +513,12 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 						context->state = mosq_cs_new;
 					}
 				}else{
-					do_disconnect(db, context);
+					do_disconnect(db, context, "SO_ERROR");
 					continue;
 				}
 			}
 			if(_mosquitto_packet_write(context)){
-				do_disconnect(db, context);
+				do_disconnect(db, context, "pack write error");
 				continue;
 			}
 		}
@@ -542,14 +542,17 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 		if(pollfds[context->pollfd_index].revents & POLLIN){
 #endif
 			do{
-				if(_mosquitto_packet_read(db, context)){
-					do_disconnect(db, context);
+				int rc = _mosquitto_packet_read(db, context);
+				if (rc) {
+          char buf[100];
+          sprintf(buf, "[%s]packet read error: %d", __func__, rc);
+					do_disconnect(db, context, buf);
 					continue;
 				}
 			}while(SSL_DATA_PENDING(context));
 		}
 		if(context->pollfd_index >= 0 && pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL | POLLHUP)){
-			do_disconnect(db, context);
+			do_disconnect(db, context, "poll error");
 			continue;
 		}
 	}

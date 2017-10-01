@@ -234,7 +234,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					mosq->pollfd_index = -1;
 				}
 				mosq->wsi = NULL;
-				do_disconnect(db, mosq);
+				do_disconnect(db, mosq, "LWS_CALLBACK_CLOSED");
 			}
 			break;
 
@@ -380,7 +380,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				mosq->last_msg_in = mosquitto_time();
 
 				if(rc){
-					do_disconnect(db, mosq);
+					do_disconnect(db, mosq, "packet handle rc");
 					return -1;
 				}
 			}

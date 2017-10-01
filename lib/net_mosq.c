@@ -1086,7 +1086,10 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 
 		if(mosq->in_packet.remaining_length > 0){
 			mosq->in_packet.payload = _mosquitto_malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
-			if(!mosq->in_packet.payload) return MOSQ_ERR_NOMEM;
+			if(!mosq->in_packet.payload) {
+        _mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "mosq->in_packet.remaining_length = %ld\n",(long)mosq->in_packet.remaining_length);
+        return MOSQ_ERR_NOMEM;
+      }
 			mosq->in_packet.to_process = mosq->in_packet.remaining_length;
 		}
 	}
@@ -1135,6 +1138,10 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 	}
 #  endif
 	rc = mqtt3_packet_handle(db, mosq);
+  if (rc != 0) {
+    int cmd = (mosq->in_packet.command)&0xF0;
+    _mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: mqtt3_packet_handle(cmd=%d) returned %d", cmd, rc);
+  }
 #else
 	rc = _mosquitto_packet_handle(mosq);
 #endif

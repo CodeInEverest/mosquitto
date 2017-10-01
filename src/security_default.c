@@ -756,13 +756,13 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 		/* Check for anonymous clients when allow_anonymous is false */
 		if(!allow_anonymous && !context->username){
 			context->state = mosq_cs_disconnecting;
-			do_disconnect(db, context);
+			do_disconnect(db, context, "username not specified");
 			continue;
 		}
 		/* Check for connected clients that are no longer authorised */
 		if(mosquitto_unpwd_check_default(db, context->username, context->password) != MOSQ_ERR_SUCCESS){
 			context->state = mosq_cs_disconnecting;
-			do_disconnect(db, context);
+			do_disconnect(db, context, "auth check fail");
 			continue;
 		}
 		/* Check for ACLs and apply to user. */
